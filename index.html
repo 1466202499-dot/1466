@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="aurora">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>团队效能的密码 · 谷歌亚里士多德项目</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/aurora.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<style>
+/* ===== deck-scoped styles (tokens only) ===== */
+/* transparent so the theme's ambient body gradient shows through */
+.deck{background:transparent}
+.fx-bg{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.75}
+.layer{position:relative;z-index:1}
+.deck-header,.deck-footer{z-index:12}
+.chapter-tag{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);
+  font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
+  padding:6px 14px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
+  border-radius:999px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.big-q{font-size:54px;line-height:1;font-weight:900;opacity:.5;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* numbered badge */
+.badge{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:17px;color:#06091c;background:var(--grad)}
+.badge-sm{width:26px;height:26px;flex:0 0 26px;border-radius:8px;font-size:13px}
+
+/* five-factor pyramid */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.pyr-row{display:flex;align-items:center;gap:18px;justify-content:center;width:100%}
+.pyr-bar{border-radius:12px;padding:14px 22px;border:1px solid var(--border-strong);
+  background:var(--surface);display:flex;align-items:center;gap:14px;
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.pyr-bar:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.pyr-bar .n{font-family:var(--font-mono);font-size:12px;color:var(--text-3)}
+.pyr-bar .t{font-weight:700;font-size:19px}
+.pyr-bar .s{font-size:13px;color:var(--text-2)}
+.pyr-base{border:1.5px solid var(--accent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,transparent),color-mix(in srgb,var(--accent-3) 18%,transparent));
+  box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 8%,transparent),var(--shadow);
+  animation:baseGlow 3.2s var(--ease) infinite}
+@keyframes baseGlow{0%,100%{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 6%,transparent),var(--shadow)}
+  50%{box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 12%,transparent),var(--shadow-lg)}}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.qopt{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--surface);cursor:pointer;
+  transition:transform .25s var(--ease),border-color .25s var(--ease),opacity .4s var(--ease)}
+.qopt:hover{transform:translateY(-3px);border-color:var(--border-strong)}
+.qopt .k{font-family:var(--font-mono);font-weight:800;font-size:20px;color:var(--accent-2)}
+.qopt .lbl{font-weight:700;font-size:18px}
+.qopt .sub{font-size:13px;color:var(--text-3)}
+.quiz.revealed .qopt{opacity:.34}
+.quiz.revealed .qopt.is-right{opacity:1;border-color:var(--accent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 20%,transparent),transparent);
+  transform:scale(1.03);box-shadow:0 0 40px color-mix(in srgb,var(--accent) 30%,transparent)}
+.qopt.is-right .k{color:var(--accent)}
+.quiz-hint{font-size:14px;color:var(--text-3);margin-top:16px}
+.quiz.revealed ~ .quiz-hint .before{display:none}
+.quiz-answer{display:none;margin-top:18px;font-size:19px;font-weight:600;color:var(--accent)}
+.quiz.revealed ~ .quiz-answer{display:block;animation:qa .6s var(--ease) both}
+@keyframes qa{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* risk / method cards */
+.mini{padding:16px 18px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);
+  display:flex;flex-direction:column;justify-content:center}
+.mini h5{margin:0 0 6px;font-size:16px;font-weight:700;display:flex;gap:8px;align-items:center}
+.mini p{margin:0;font-size:13px;line-height:1.55;color:var(--text-2)}
+.grp{border:1px solid var(--border);border-radius:var(--radius);padding:18px;background:color-mix(in srgb,var(--surface-2) 60%,transparent);
+  display:flex;flex-direction:column}
+.grp>.grid{flex:1}
+.grp-title{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-weight:800;font-size:17px}
+.grp-risk{border-top:3px solid var(--bad)}
+.grp-risk .badge{background:linear-gradient(135deg,var(--bad),var(--warn))}
+.grp-fix{border-top:3px solid var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 7px;margin-top:8px}
+.dot-bad{background:var(--bad)}
+.li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--text-2)}
+.li b{color:var(--text-1);font-weight:700}
+.li+.li{margin-top:10px}
+
+/* 2x2 matrix */
+.matrix{display:grid;grid-template-columns:56px 1fr 1fr;grid-template-rows:1fr 1fr 40px;gap:12px;height:400px}
+.quad{border-radius:var(--radius);padding:20px 22px;border:1px solid var(--border);
+  background:var(--surface);position:relative;overflow:hidden;transition:transform .3s var(--ease)}
+.quad:hover{transform:scale(1.02)}
+.quad h4{margin:0 0 6px;font-size:20px}
+.quad p{margin:0;font-size:13px;color:var(--text-2);line-height:1.5}
+.quad .zone{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3)}
+.q-win{border:1.5px solid var(--accent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent-2) 12%,transparent))}
+/* glow lives on ::after so it never overrides the stagger entry animation */
+.q-win::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 60px color-mix(in srgb,var(--accent) 35%,transparent);
+  animation:winPulse 3s var(--ease) infinite}
+@keyframes winPulse{0%,100%{opacity:.35}50%{opacity:1}}
+.q-bad{border-top:3px solid var(--bad)}
+.axis-y{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;
+  font-size:13px;letter-spacing:.2em;color:var(--text-3);grid-row:1/3}
+.axis-x{grid-column:2/4;display:flex;align-items:center;justify-content:center;
+  font-size:13px;letter-spacing:.2em;color:var(--text-3)}
+.formula{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-weight:800;font-size:22px}
+.formula .chip{padding:10px 18px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface)}
+.formula .op{color:var(--accent);font-size:26px}
+
+/* checklist */
+.chk{display:flex;gap:14px;align-items:flex-start;padding:20px 22px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .3s var(--ease)}
+.chk .box{width:26px;height:26px;flex:0 0 26px;border-radius:8px;border:2px solid var(--border-strong);
+  display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent;transition:all .3s var(--ease)}
+.chk.done{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.chk.done .box{background:var(--accent);border-color:var(--accent);color:#06091c}
+.chk h4{margin:0 0 4px;font-size:18px}
+.chk p{margin:0;font-size:13.5px;color:var(--text-2)}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi{padding:18px 20px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface)}
+.kpi .v{font-size:46px;font-weight:900;line-height:1;background:var(--grad);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.kpi .l{font-size:12.5px;color:var(--text-3);margin-top:6px;letter-spacing:.06em}
+
+.vs{display:grid;grid-template-columns:1fr 96px 1fr;gap:0;align-items:stretch}
+.vs-mid{display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);
+  font-size:16px;color:var(--text-3);letter-spacing:.1em}
+</style>
+</head>
+<body data-themes="aurora,rainbow-gradient,cyberpunk-neon,vaporwave,tokyo-night,sunset-warm,xiaohongshu-white,memphis-pop" data-theme-base="assets/themes/">
+
+<div class="deck">
+
+<!-- ══════════ 1 · Cover ══════════ -->
+<section class="slide center tc" data-title="封面 · 团队效能的密码">
+  <div class="fx-bg" data-fx="constellation"></div>
+  <div class="deck-header"><span class="eyebrow">内部培训 · 第四期分享</span><span class="eyebrow">Project Aristotle</span></div>
+  <div class="layer" style="max-width:1100px">
+    <p class="kicker anim-fade-down" data-anim="fade-down">Google · 亚里士多德项目</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:104px;margin-bottom:22px">
+      团队效能的<span class="gradient-text">密码</span>
+    </h1>
+    <p class="lede anim-fade-up" data-anim="fade-up" style="margin:0 auto;font-size:24px">
+      全球顶级科技公司，用数据找出高效团队的底层逻辑
+    </p>
+    <div class="row wrap mt-l" style="justify-content:center;gap:10px">
+      <span class="pill pill-accent">2 年研究</span>
+      <span class="pill">180+ 团队</span>
+      <span class="pill">5 大因素</span>
+      <span class="pill">1 个地基</span>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">团队效能的密码 · 案例分享</span><span class="slide-number" data-current="1" data-total="14"></span></div>
+  <div class="notes">开场：今天这一期，我们不讲方法论清单，讲一个实验。谷歌花了两年时间、研究了 180 多个团队，想回答一个特别朴素的问题——为什么有的团队特别能打，有的团队天天开会却出不来东西。结论有点反直觉，我先不说，我们一步一步来。</div>
+</section>
+
+<!-- ══════════ 2 · 反直觉的疑问 ══════════ -->
+<section class="slide" data-title="01 · 一个反直觉的疑问">
+  <div class="fx-bg" data-fx="gradient-blob" style="opacity:.32"></div>
+  <div class="layer">
+    <span class="chapter-tag anim-fade-down" data-anim="fade-down">Chapter 01 · 案例背景</span>
+    <h2 class="h2 mt-m" style="margin-bottom:6px">为什么「最强阵容」<span class="gradient-text">反而跑不赢</span>？</h2>
+    <p class="dim" style="font-size:17px;margin-top:0">谷歌自己也被这个问题困住了很多年。</p>
+
+    <div class="vs mt-l">
+      <div class="card anim-fade-left" data-anim="fade-left" style="border-top:3px solid var(--accent-2)">
+        <p class="eyebrow" style="color:var(--accent-2)">谷歌长期信条</p>
+        <h3 style="font-size:26px;margin-top:10px">招最聪明的人，<br>把他们放在一起，<br>好结果自然会来。</h3>
+        <p class="dim mt-m" style="font-size:14px">——一个听起来完全正确的假设：人对了，事就对了。</p>
+      </div>
+      <div class="vs-mid"><span class="big-q">但</span></div>
+      <div class="card anim-fade-right" data-anim="fade-right" style="border-top:3px solid var(--bad)">
+        <p class="eyebrow" style="color:var(--bad)">现实却是</p>
+        <div class="li mt-m" style="font-size:16px"><span class="dot dot-bad"></span><span>精英团队有时<b>反不如「普通」团队</b></span></div>
+        <div class="li" style="font-size:16px"><span class="dot dot-bad"></span><span>同一批人在不同项目里，<b>判若两队</b></span></div>
+        <div class="li" style="font-size:16px"><span class="dot dot-bad"></span><span>换个组，战斗力像换了个人</span></div>
+        <p class="dim mt-m" style="font-size:14px">如果决定因素是「人」，这三件事都不该发生。</p>
+      </div>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">01 · 案例背景</span><span class="slide-number" data-current="2" data-total="14"></span></div>
+  <div class="notes">先建立张力。左边这句话，我相信在座每个人都同意过——找最强的人。但右边这三个现象，是谷歌真实观察到的。注意第二条，这是最关键的线索：<strong>同一批人，换个项目就判若两队</strong>。如果决定效能的是「人」，这件事在逻辑上根本不该发生。所以问题一定不在人身上。</div>
+</section>
+
+<!-- ══════════ 3 · 研究方法 ══════════ -->
+<section class="slide" data-title="02 · 史上最大规模的团队实验">
+  <div class="layer">
+    <span class="chapter-tag">Chapter 02 · 研究方法</span>
+    <h2 class="h2 mt-m" style="margin-bottom:18px">谷歌做了一场<span class="gradient-text">「史上最大规模」</span>的团队实验</h2>
+
+    <div class="kpi-strip anim-stagger-list" data-anim-target>
+      <div class="kpi"><div class="v"><span class="counter" data-to="2">0</span> 年</div><div class="l">持续研究周期</div></div>
+      <div class="kpi"><div class="v"><span class="counter" data-to="180">0</span>+</div><div class="l">覆盖团队样本</div></div>
+      <div class="kpi"><div class="v"><span class="counter" data-to="4">0</span> 年</div><div class="l">2012 立项 → 2015 工具化</div></div>
+      <div class="kpi"><div class="v"><span class="counter" data-to="5">0</span></div><div class="l">最终锁定的关键因素</div></div>
+    </div>
+
+    <div class="grid g4 mt-l anim-stagger-list" data-anim-target style="gap:16px">
+      <div class="grp"><div class="grp-title"><span class="badge">01</span>起因</div>
+        <p class="mini" style="border:none;background:transparent;padding:0"><b>精英团队也会翻车。</b><br><span class="dim">同样是顶尖人才，有的效率飞起，有的拉垮，换组就判若两人——这太奇怪了。</span></p></div>
+      <div class="grp"><div class="grp-title"><span class="badge">02</span>做法</div>
+        <p class="mini" style="border:none;background:transparent;padding:0"><b>像科学家一样研究团队。</b><br><span class="dim">代码量、绩效评分、问卷、访谈，还蹲在旁边看他们怎么开会。</span></p></div>
+      <div class="grp"><div class="grp-title"><span class="badge">03</span>意外</div>
+        <p class="mini" style="border:none;background:transparent;padding:0"><b>第一步假设全部落空。</b><br><span class="dim">学历、技能、性格、工龄……全部对不上，精英组和普通组一样乱。</span></p></div>
+      <div class="grp"><div class="grp-title"><span class="badge">04</span>转折</div>
+        <p class="mini" style="border:none;background:transparent;padding:0"><b>换个方向，豁然开朗。</b><br><span class="dim">从「谁」转向「怎么互动」——终于找到 5 个关键因素。</span></p></div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent)">
+      <p style="margin:0;font-size:17px">这场实验最大的震撼：决定团队效能的不是「<b>谁</b>」，而是「<b class="gradient-text">怎么相处</b>」——这颠覆了谷歌多年的信条。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">02 · 研究方法</span><span class="slide-number" data-current="3" data-total="14"></span></div>
+  <div class="notes">这四步我想强调第三步：<strong>假设全部落空</strong>。谷歌一开始也是按我们的直觉去找的——看学历、看技能、看性格、看工龄，结果一条都对不上。这是整个研究最有价值的部分，因为它逼着他们换了个提问方式：不问「团队里有谁」，改问「他们之间怎么互动」。一句话总结这一页：不是「谁」，是「怎么相处」。</div>
+</section>
+
+<!-- ══════════ 4 · 猜一猜（互动） ══════════ -->
+<section class="slide" data-title="互动 · 猜一猜">
+  <div class="layer">
+    <span class="chapter-tag">Interactive · 现场投票</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">猜一猜：哪个因素<span class="gradient-text">影响最大</span>？</h2>
+    <p class="dim" style="margin-top:0;font-size:16px">先别看后面——凭直觉选一个。</p>
+
+    <div class="quiz mt-m" id="quiz">
+      <div class="qopt" data-k="A"><span class="k">A</span><div><div class="lbl">团队成员的个人能力与经验</div><div class="sub">技能、履历、智商</div></div></div>
+      <div class="qopt" data-k="B"><span class="k">B</span><div><div class="lbl">团队规模与组织架构</div><div class="sub">人数、层级、汇报关系</div></div></div>
+      <div class="qopt is-right" data-k="C"><span class="k">C</span><div><div class="lbl">心理安全感</div><div class="sub">敢于说真话、不怕犯错</div></div></div>
+      <div class="qopt" data-k="D"><span class="k">D</span><div><div class="lbl">目标与角色的清晰度</div><div class="sub">每个人知道该做什么</div></div></div>
+      <div class="qopt" data-k="E" style="grid-column:1/3"><span class="k">E</span><div><div class="lbl">工作的意义感与影响力</div><div class="sub">觉得工作有意义、产生了改变</div></div></div>
+    </div>
+    <p class="quiz-hint"><span class="before">👆 点击任意选项（或按 <b>回车</b>）揭晓答案</span></p>
+    <p class="quiz-answer">答案是 <b>C · 心理安全感</b> —— 而且它不只是「之一」，它是唯一的第一要素。</p>
+  </div>
+  <div class="deck-footer"><span class="dim2">互动环节</span><span class="slide-number" data-current="4" data-total="14"></span></div>
+  <div class="notes">这里一定要停下来，真的让大家举手投票。A 和 D 通常票最多——这很正常，因为它们最符合管理直觉。让大家先把票投出去，答案的冲击力才会足。点一下屏幕揭晓：<strong>是 C，心理安全感</strong>。而且关键不在于它排第一，而在于它和其他四个不是并列关系，这是下一页的重点。</div>
+</section>
+
+<!-- ══════════ 5 · 五大因素 ══════════ -->
+<section class="slide" data-title="五大发现因素">
+  <div class="fx-bg" data-fx="orbit-ring" style="opacity:.3"></div>
+  <div class="layer">
+    <span class="chapter-tag">The Five Keys</span>
+    <h2 class="h2 mt-m" style="margin-bottom:18px">影响团队效能的<span class="gradient-text">五个关键因素</span></h2>
+
+    <div class="grid mt-m anim-stagger-list" data-anim-target style="grid-template-columns:1.35fr 1fr 1fr 1fr 1fr;gap:14px">
+      <div class="card" style="border:1.5px solid var(--accent);background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 18%,transparent),transparent)">
+        <span class="badge">01</span>
+        <h3 style="font-size:25px;margin-top:14px">心理安全感</h3>
+        <p class="dim2 mono" style="font-size:11px;letter-spacing:.1em">PSYCHOLOGICAL SAFETY</p>
+        <p class="dim mt-s" style="font-size:14px">敢说真话、敢提问、敢承认错误，不担心被羞辱或报复。</p>
+        <span class="pill pill-accent mt-m" style="display:inline-block">唯一的第一要素</span>
+      </div>
+      <div class="card card-accent"><span class="badge badge-sm">02</span>
+        <h4 class="mt-s" style="font-size:19px">可靠性</h4>
+        <p class="dim2 mono" style="font-size:10px">DEPENDABILITY</p>
+        <p class="dim" style="font-size:13px">说到做到，按时交付，不用互相催。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">03</span>
+        <h4 class="mt-s" style="font-size:19px">结构与清晰度</h4>
+        <p class="dim2 mono" style="font-size:10px">STRUCTURE &amp; CLARITY</p>
+        <p class="dim" style="font-size:13px">目标、角色、执行计划都清楚。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">04</span>
+        <h4 class="mt-s" style="font-size:19px">工作的意义</h4>
+        <p class="dim2 mono" style="font-size:10px">MEANING</p>
+        <p class="dim" style="font-size:13px">这件事对我个人是有价值的。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">05</span>
+        <h4 class="mt-s" style="font-size:19px">工作的影响力</h4>
+        <p class="dim2 mono" style="font-size:10px">IMPACT</p>
+        <p class="dim" style="font-size:13px">我相信我做的事真的带来了改变。</p></div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent)">
+      <p style="margin:0;font-size:17px"><b>核心结论：</b>心理安全感是<b class="gradient-text">其余四个因素发挥作用的底层地基</b>——它们不是一张平行清单。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">五大发现</span><span class="slide-number" data-current="5" data-total="14"></span></div>
+  <div class="notes">五个因素，但你看排版就知道我想强调什么。后面四个都很重要，可是它们有一个共同前提：都得靠人愿意开口。目标不清楚，得有人敢说「我没听懂」；说到做不到，得有人敢提前说「我这周搞不定」。所以谷歌的原话是——<strong>心理安全感是其余四个因素发挥作用的地基</strong>，不是并列的第五项。</div>
+</section>
+
+<!-- ══════════ 6 · 漏斗 / 地基 ══════════ -->
+<section class="slide" data-title="漏斗结构 · 地基的力量">
+  <div class="layer">
+    <span class="chapter-tag">Structure · 层层递进</span>
+    <h2 class="h2 mt-m" style="margin-bottom:8px">漏斗结构：<span class="gradient-text">地基的力量</span></h2>
+    <p class="dim" style="margin-top:0;font-size:16px">五因素是层层递进的漏斗，而不是一张平行清单。</p>
+
+    <div class="pyramid mt-l anim-stagger-list" data-anim-target>
+      <div class="pyr-row"><div class="pyr-bar" style="width:40%"><span class="n">05</span><span class="t">工作的影响力</span><span class="s">· 我的工作带来了改变</span></div></div>
+      <div class="pyr-row"><div class="pyr-bar" style="width:52%"><span class="n">04</span><span class="t">工作的意义</span><span class="s">· 这件事值得我投入</span></div></div>
+      <div class="pyr-row"><div class="pyr-bar" style="width:64%"><span class="n">03</span><span class="t">结构与清晰度</span><span class="s">· 我知道该做什么</span></div></div>
+      <div class="pyr-row"><div class="pyr-bar" style="width:76%"><span class="n">02</span><span class="t">可靠性</span><span class="s">· 我们能互相托付</span></div></div>
+      <div class="pyr-row"><div class="pyr-bar pyr-base" style="width:92%"><span class="n">01</span><span class="t" style="font-size:22px">心理安全感 · 地基</span><span class="s" style="color:var(--text-1)">· 我敢开口，说了不会被惩罚</span></div></div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent-3)">
+      <p style="margin:0;font-size:17px"><b>反直觉：</b>心理安全感高的「普通」团队，可以<b class="gradient-text">稳定跑赢</b>全明星但充满提防的团队。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">地基的力量</span><span class="slide-number" data-current="6" data-total="14"></span></div>
+  <div class="notes">这张图我建议从下往上讲。最底下那一层是地基：我敢开口。往上一层，可靠性——只有敢说「我这周做不完」，团队才可能真的可靠，否则你收到的都是「没问题」，然后在截止日期当天崩掉。再往上，清晰度、意义、影响力，全都建立在同一件事上：信息能不能真实地流动。地基塌了，上面四层都是装饰。</div>
+</section>
+
+<!-- ══════════ 7 · Big quote ══════════ -->
+<section class="slide center tc" data-title="金句 · 反直觉">
+  <div class="fx-bg" data-fx="gradient-blob" style="opacity:.26"></div>
+  <div class="layer" style="max-width:1060px">
+    <div class="serif" style="font-size:130px;line-height:.8;color:var(--accent);opacity:.55">"</div>
+    <blockquote class="serif anim-spotlight" data-anim="spotlight" style="font-size:50px;line-height:1.35;margin:-14px 0 24px;font-weight:600">
+      一个<span class="gradient-text">敢说真话</span>的普通团队，<br>会长期跑赢一个<span style="color:var(--bad)">互相提防</span>的全明星团队。
+    </blockquote>
+    <p class="dim" style="font-size:17px;letter-spacing:.08em">— 谷歌亚里士多德项目，2012–2015</p>
+  </div>
+  <div class="deck-footer"><span class="dim2">核心结论</span><span class="slide-number" data-current="7" data-total="14"></span></div>
+  <div class="notes">这一页停三秒，让这句话自己说话。不用补充。如果只能带走一句，就是这句。</div>
+</section>
+
+<!-- ══════════ 8 · 压力源 ①② ══════════ -->
+<section class="slide" data-title="03 · 不安全感来源 ①②">
+  <div class="layer">
+    <span class="chapter-tag" style="color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)">Chapter 03 · 深度拓展</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">业务团队心理不安全感的<span style="color:var(--bad)">核心来源</span>（上）</h2>
+    <p class="dim" style="margin-top:0;font-size:15px">业绩 · 问责 · 竞争 · 不确定性——四大压力源，先看前两个。</p>
+
+    <div class="grid g2 mt-m anim-stagger-list" data-anim-target style="gap:20px">
+      <div class="grp grp-risk">
+        <div class="grp-title"><span class="badge">01</span>考核与目标层面</div>
+        <div class="grid g3" style="gap:12px">
+          <div class="mini"><h5>目标朝令夕改</h5><p>强压不合理指标，频繁调整规则，努力也未必达标。</p></div>
+          <div class="mini"><h5>唯结果论惩罚</h5><p>只看业绩数字，扣薪批评末位淘汰，人人自危。</p></div>
+          <div class="mini"><h5>考核黑箱操作</h5><p>晋升评优标准不透明，全凭领导主观判断。</p></div>
+        </div>
+      </div>
+      <div class="grp grp-risk">
+        <div class="grp-title"><span class="badge">02</span>管理者行为层面</div>
+        <div class="grid g2" style="gap:12px">
+          <div class="mini"><h5>习惯性打压否定</h5><p>开会先骂人，提建议先挑错，出问题先甩锅。</p></div>
+          <div class="mini"><h5>情绪化喜怒无常</h5><p>员工每天猜脸色，精力耗在防出错而非做业务。</p></div>
+          <div class="mini"><h5>信息垄断突然袭击</h5><p>关键信息藏着掖着，靠小道消息越猜越焦虑。</p></div>
+          <div class="mini"><h5>过度微管理</h5><p>事事过问步步审批，本质是对员工不信任。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">03 · 压力源（上）</span><span class="slide-number" data-current="8" data-total="14"></span></div>
+  <div class="notes">从这里开始落到我们自己的业务团队。这两块是<strong>管理动作直接造成的</strong>，也就是说，改起来最快的也是这两块。我特别想点出「过度微管理」——很多管理者觉得这是负责，但员工收到的信号是「你不信我」。还有「信息垄断」：人在信息真空里一定会自己编故事，而且编出来的通常比现实糟。</div>
+</section>
+
+<!-- ══════════ 9 · 压力源 ③④ ══════════ -->
+<section class="slide" data-title="03 · 不安全感来源 ③④">
+  <div class="layer">
+    <span class="chapter-tag" style="color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)">Chapter 03 · 深度拓展</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">业务团队心理不安全感的<span style="color:var(--bad)">核心来源</span>（下）</h2>
+    <p class="dim" style="margin-top:0;font-size:15px">这两块更隐蔽——它们长在氛围和职责里，不在某一次会议上。</p>
+
+    <div class="grid g2 mt-m anim-stagger-list" data-anim-target style="gap:20px">
+      <div class="grp grp-risk">
+        <div class="grp-title"><span class="badge">03</span>团队氛围层面</div>
+        <div class="grid g3" style="gap:12px">
+          <div class="mini"><h5>零和博弈恶性内卷</h5><p>藏经验，不敢暴露短板，怕被笑话。</p></div>
+          <div class="mini"><h5>甩锅指责文化</h5><p>出问题先找人背锅，小问题最终拖成大隐患。</p></div>
+          <div class="mini"><h5>职场政治站队</h5><p>拉帮结派，站错队被边缘化，优先明哲保身。</p></div>
+        </div>
+      </div>
+      <div class="grp grp-risk">
+        <div class="grp-title"><span class="badge">04</span>角色与职业层面</div>
+        <div class="grid g3" style="gap:12px">
+          <div class="mini"><h5>权责倒挂被迫背锅</h5><p>无决策权限却为上级错误买单，职责边界模糊。</p></div>
+          <div class="mini"><h5>零容错环境</h5><p>不区分试错与失职，失误就全盘否定，不敢创新。</p></div>
+          <div class="mini"><h5>职业前景不明</h5><p>看不到成长路径，担心被淘汰，不敢承认能力不足。</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:15px 22px;border-left:3px solid var(--bad)">
+      <p style="margin:0;font-size:16px">共同结果：<b>精力从「做业务」转移到「防出错、防背锅」</b>——效能就是这样悄悄流失的。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">03 · 压力源（下）</span><span class="slide-number" data-current="9" data-total="14"></span></div>
+  <div class="notes">这两块比上一页更难改，因为没有单一责任人。「零和博弈」那条最典型：当考核是排名制的时候，藏经验是理性行为，不是人品问题。所以下一页讲方法的时候，重点不是号召大家「要开放」，而是<strong>改掉那些让藏经验变得理性的机制</strong>。最后这句话是这一段的落点：精力从做业务，转移到防背锅。</div>
+</section>
+
+<!-- ══════════ 10 · 落地 ① 管理者行为 ══════════ -->
+<section class="slide" data-title="04 · 落地方法 · 管理者行为">
+  <div class="layer">
+    <span class="chapter-tag">Chapter 04 · 落地方法</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">最快见效：<span class="gradient-text">管理者先示范</span></h2>
+    <p class="dim" style="margin-top:0;font-size:15px">不需要预算，不需要审批，下周的会上就能开始做。</p>
+
+    <div class="grid mt-m anim-stagger-list" data-anim-target style="grid-template-columns:repeat(5,1fr);gap:14px">
+      <div class="card card-accent"><span class="badge badge-sm">01</span>
+        <h4 class="mt-s" style="font-size:18px">主动示弱示范</h4>
+        <p class="dim" style="font-size:13.5px">开会承认自己的错误、坦诚说不懂。上行下效，这是启动键。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">02</span>
+        <h4 class="mt-s" style="font-size:18px">领导最后发言</h4>
+        <p class="dim" style="font-size:13.5px">先基层后主管，避免领导先定调、扼杀所有讨论。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">03</span>
+        <h4 class="mt-s" style="font-size:18px">追责会改学习会</h4>
+        <p class="dim" style="font-size:13.5px">只问「怎么解决、学到什么」，对事不对人。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">04</span>
+        <h4 class="mt-s" style="font-size:18px">「补充」替代「反驳」</h4>
+        <p class="dim" style="font-size:13.5px">降低对抗感，让员工愿意把话说完、继续表达。</p></div>
+      <div class="card card-accent"><span class="badge badge-sm">05</span>
+        <h4 class="mt-s" style="font-size:18px">固定沟通节奏</h4>
+        <p class="dim" style="font-size:13.5px">每周／双周一对一，回应稳定一致，别忽冷忽热。</p></div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent)">
+      <p style="margin:0;font-size:17px">安全感不是宣布出来的。团队看的不是你说什么，而是<b class="gradient-text">你第一次听到坏消息时的反应</b>。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">04 · 管理者行为</span><span class="slide-number" data-current="10" data-total="14"></span></div>
+  <div class="notes">五条里最有用的是第一条和第二条。第一条「主动示弱」：管理者在会上说一次「这件事我判断错了」，比说十次「大家有话直说」都管用。第二条「领导最后发言」几乎是零成本的：你一开口定了调，后面就没人愿意提反对意见了。最后这句话请大家记住——<strong>团队看的是你第一次听到坏消息时的反应</strong>。那一刻就决定了下一次他们还报不报。</div>
+</section>
+
+<!-- ══════════ 11 · 落地 ②③ 机制 + 氛围 ══════════ -->
+<section class="slide" data-title="04 · 落地方法 · 机制与氛围">
+  <div class="layer">
+    <span class="chapter-tag">Chapter 04 · 落地方法</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">筑牢根基：<span class="gradient-text">用机制消化不确定性</span></h2>
+    <p class="dim" style="margin-top:0;font-size:15px">机制的作用，是让「说真话」不再依赖某位好领导。</p>
+
+    <div class="grid g2 mt-m" style="gap:20px;align-items:start">
+      <div class="grp grp-fix anim-fade-left" data-anim="fade-left">
+        <div class="grp-title"><span class="badge">02</span>机制与规则</div>
+        <div class="li"><span class="dot"></span><span><b>透明化目标考核</b>：共同商定目标，公开标准，从惩罚失败转向奖励进步。</span></div>
+        <div class="li"><span class="dot"></span><span><b>建立容错机制</b>：区分「智慧型失败」与「失职型失败」，设定季度试错额度。</span></div>
+        <div class="li"><span class="dot"></span><span><b>划清权责边界</b>：谁决策谁负责，上级失误不让下属买单，杜绝基层背锅。</span></div>
+        <div class="li"><span class="dot"></span><span><b>信息坦诚透明</b>：定期同步全貌，重大调整提前沟通，不搞突然袭击。</span></div>
+      </div>
+      <div class="grp grp-fix anim-fade-right" data-anim="fade-right">
+        <div class="grp-title"><span class="badge">03</span>氛围与团队环境</div>
+        <div class="li"><span class="dot"></span><span><b>协作共赢替代内卷</b>：加入协作考核权重，设赋能奖／风险预警奖；慎用强制末位淘汰。</span></div>
+        <div class="li"><span class="dot"></span><span><b>多层次安全表达通道</b>：公开鼓励提问 + 私密一对一不秋后算账 + 匿名问卷收敏感意见；<b>建议必反馈</b>。</span></div>
+        <div class="li"><span class="dot"></span><span><b>给压力托底</b>：低谷时先给资源和方法支持，再谈改进——团队是后盾，不是对手。</span></div>
+      </div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent-2)">
+      <p style="margin:0;font-size:16.5px">检验标准只有一个：<b>最近一次有人提出不同意见，后来怎么样了？</b>——团队会照着那个结果调整自己的行为。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">04 · 机制与氛围</span><span class="slide-number" data-current="11" data-total="14"></span></div>
+  <div class="notes">机制这一栏，我最想推的是「区分智慧型失败和失职型失职」。不区分的团队，最后一定没人敢试新东西——因为试错和犯错的代价一样。氛围那一栏注意「建议必反馈」四个字：收集意见但不回应，比不收集更伤，因为它证明了说话没用。最后那个检验标准，大家回去可以自己对一下。</div>
+</section>
+
+<!-- ══════════ 12 · 2x2 认知对齐 ══════════ -->
+<section class="slide" data-title="04 · 认知对齐 · 2×2">
+  <div class="layer">
+    <span class="chapter-tag">Alignment · 别误解安全感</span>
+    <h2 class="h2 mt-m" style="margin-bottom:14px">安全感 ≠ 降低要求：<span class="gradient-text">四象限对照</span></h2>
+
+    <div class="matrix anim-stagger-list" data-anim-target>
+      <div class="axis-y">业绩标准 · 高 →</div>
+      <div class="quad q-bad">
+        <p class="zone">Anxiety zone · 焦虑区</p>
+        <h4 style="color:var(--bad)">低安全感 + 高要求</h4>
+        <p>只会催生<b style="color:var(--text-1)">报喜不报忧、数据造假、互相甩锅</b>的焦虑型团队。问题不会消失，只会延后爆炸。</p>
+      </div>
+      <div class="quad q-win">
+        <p class="zone">Learning zone · 学习区</p>
+        <h4>高安全感 + 高要求</h4>
+        <p><b style="color:var(--text-1)">= 可持续高绩效。</b>坏消息来得早，问题在小的时候就被解决。这是我们要的那一格。</p>
+      </div>
+      <div class="quad">
+        <p class="zone">Apathy zone · 冷漠区</p>
+        <h4 class="dim">低安全感 + 低要求</h4>
+        <p>没人说话，也没人在意。表面平静，实际在缓慢流失人和机会。</p>
+      </div>
+      <div class="quad">
+        <p class="zone">Comfort zone · 舒适区</p>
+        <h4 class="dim">高安全感 + 低要求</h4>
+        <p>气氛很好，结果一般。这是把安全感误读成「不用交付」的典型代价。</p>
+      </div>
+      <div></div>
+      <div class="axis-x">心理安全感 · 高 →</div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:16px 22px;border-left:3px solid var(--accent)">
+      <div class="formula">
+        <span class="chip">高心理安全感</span><span class="op">+</span><span class="chip">高业绩标准</span>
+        <span class="op">=</span><span class="chip" style="border-color:var(--accent);color:var(--accent)">可持续高绩效</span>
+      </div>
+      <p class="dim mt-m" style="margin-bottom:0;font-size:15px">安全感保护的是「<b>说真话、试错的权利</b>」，不是「<b>完不成目标的借口</b>」。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">04 · 认知对齐</span><span class="slide-number" data-current="12" data-total="14"></span></div>
+  <div class="notes">这一页是给所有担心「讲了安全感之后没法要求业绩」的管理者看的。四个象限里，只有右上角是我们要的。请特别注意左上角，那是很多高压团队的真实位置：要求很高，安全感很低，得到的不是高绩效，是<strong>报喜不报忧和数据造假</strong>。最后一句请原样带走：安全感保护的是说真话和试错的权利，不是完不成目标的借口。</div>
+</section>
+
+<!-- ══════════ 13 · 行动清单 ══════════ -->
+<section class="slide" data-title="行动清单 · 本周就能做">
+  <div class="layer">
+    <span class="chapter-tag">Take Action · 不用等授权</span>
+    <h2 class="h2 mt-m" style="margin-bottom:4px">下周开始，<span class="gradient-text">先做这三件</span></h2>
+    <p class="dim" style="margin-top:0;font-size:15px">点一下勾选——挑一件你今天就愿意承诺的。</p>
+
+    <div class="stack mt-l anim-stagger-list" data-anim-target style="gap:16px">
+      <div class="chk"><span class="box">✓</span><div>
+        <h4>下一次周会，我最后发言</h4>
+        <p>让基层先说完，我不提前定调；并且在会上主动讲一件「我判断错了」的事。</p></div></div>
+      <div class="chk"><span class="box">✓</span><div>
+        <h4>把最近一次追责会，改成复盘会</h4>
+        <p>只问两个问题：怎么解决、我们学到什么。不问「这是谁干的」。</p></div></div>
+      <div class="chk"><span class="box">✓</span><div>
+        <h4>给团队一条「说真话」的固定通道</h4>
+        <p>每周一对一固定 20 分钟，明确承诺不秋后算账；且每条建议都给回复。</p></div></div>
+    </div>
+
+    <div class="card mt-l anim-fade-up" data-anim="fade-up" style="padding:14px 22px">
+      <p class="dim" style="margin:0;font-size:15px">四周后自查一次：团队主动上报的坏消息，是变多了还是变少了？<b class="gradient-text">变多才是好信号。</b></p>
+    </div>
+  </div>
+  <div class="deck-footer"><span class="dim2">行动清单</span><span class="slide-number" data-current="13" data-total="14"></span></div>
+  <div class="notes">不要让分享停在「挺有道理」。三件事都不需要预算、不需要审批，下周就能做。选一件当场承诺。最后那个自查指标我特别喜欢：<strong>坏消息变多是好信号</strong>。因为坏消息的数量从来没变过，变的只是它有没有走到你面前。</div>
+</section>
+
+<!-- ══════════ 14 · Thanks ══════════ -->
+<section class="slide center tc" data-title="Thanks">
+  <div class="fx-bg" data-fx="confetti-cannon"></div>
+  <div class="layer" style="max-width:1000px">
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:82px;line-height:1.15">
+      让<span class="gradient-text">说真话</span>变得安全，
+    </h1>
+    <p class="lede" style="margin:0 auto;font-size:26px">那可能就是一切改变的起点。</p>
+    <div class="divider-accent" style="margin:34px auto"></div>
+    <p class="dim" style="font-size:19px;letter-spacing:.1em">感谢聆听 · Thank You</p>
+    <p class="dim2 mt-l" style="font-size:13px">团队效能的密码 · 谷歌亚里士多德项目案例分享 · 第四期</p>
+    <p class="dim2 mt-m" style="font-size:12px">←/→ 翻页 · T 换主题 · A 换动效 · F 全屏 · O 概览 · S 演讲者模式 · N 备注</p>
+  </div>
+  <div class="deck-footer"><span class="dim2">END</span><span class="slide-number" data-current="14" data-total="14"></span></div>
+  <div class="notes">收尾回到最开始那个疑问：为什么最强阵容跑不赢。因为效能不长在履历上，长在人和人之间的空气里。谢谢大家，我们进入 Q&amp;A。</div>
+</section>
+
+</div>
+
+<div class="progress-bar"><span></span></div>
+
+<script src="assets/runtime.js"></script>
+<script src="assets/animations/fx-runtime.js"></script>
+<script>
+/* quiz reveal */
+(function(){
+  const quiz = document.getElementById('quiz');
+  if(!quiz) return;
+  const reveal = () => quiz.classList.add('revealed');
+  quiz.addEventListener('click', reveal);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && quiz.closest('.slide').classList.contains('is-active')) reveal();
+  });
+})();
+/* checklist toggle */
+document.querySelectorAll('.chk').forEach(el => {
+  el.addEventListener('click', () => el.classList.toggle('done'));
+});
+</script>
+</body></html>
